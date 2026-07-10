@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6fa; margin: 0; padding: 0; }
+    header { background-color: #009688; padding: 32px 0; margin-bottom: 24px; }
+    header .header-wrapper { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px 32px; text-align: center; }
+    header h1 { margin: 0 0 6px 0; font-size: 2rem; color: #004D40; }
+    header p { margin: 0; color: #00796b; font-size: 1rem; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px 40px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 3px 14px #c7d3eb; padding: 24px; margin-bottom: 20px; }
+    input[type="file"] { width: 100%; box-sizing: border-box; margin-bottom: 14px; padding: 12px; border: 1.5px solid #b3c2d4; border-radius: 10px; background: #f8f8f8; font-size: 15px; }
+    .btn { width: 100%; box-sizing: border-box; margin-bottom: 14px; padding: 13px; border: none; border-radius: 10px; background: #009688; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .btn:hover { background: #00796b; }
+    .btn-sample { background: #e8f5f3; color: #009688; border: 2px solid #009688; }
+    .btn-sample:hover { background: #009688; color: #fff; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; background: white; border-radius: 12px; overflow: hidden; }
+    th, td { padding: 14px 16px; border: 1px solid #d5dde6; text-align: left; font-size: 14px; }
+    th { background: #009688; color: white; font-size: 15px; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr:hover { background: #e8f5f3; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrapper">
+      <h1>JSON Status Reader</h1>
+      <p>Upload JSON files to read System ID and last document status</p>
+    </div>
+  </header>
+  <div class="container">
+    <div class="card">
+      <input id="fileInput" type="file" multiple accept=".json" />
+      <button id="loadSampleBtn" class="btn btn-sample">🚀 Load sample data</button>
+      <table id="resultTable">
+        <thead><tr><th>File</th><th>System ID</th><th>Last Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const fileInput = document.getElementById("fileInput");
+      const tableBody = document.querySelector("#resultTable tbody");
+
+      document.getElementById('loadSampleBtn').addEventListener('click', () => {
+        const samples = [
+          { name: 'expense-doc-001.json', systemId: 'ERP-SYS-001', docStatus: 'POSTING_CONFIRMED_SUCCESS' },
+          { name: 'expense-doc-002.json', systemId: 'ERP-SYS-002', docStatus: 'POSTING_CONFIRMED_FAILURE' },
+          { name: 'expense-doc-003.json', systemId: 'ERP-SYS-003', docStatus: 'POSTING_CONFIRMED_SUCCESS' },
+        ];
+        tableBody.innerHTML = '';
+        samples.forEach(s => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${s.name}</td><td>${s.systemId}</td><td>${s.docStatus}</td>`;
+          tableBody.appendChild(row);
+        });
+      });
+
+      fileInput.addEventListener("change", async (event) => {
+        const files = event.target.files;
+        tableBody.innerHTML = "";
+        for (const file of files) {
+          try {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            const total = json.numberReturned || 0;
+            const ultimoDoc = total > 0 ? json.fIDocuments[total - 1] : null;
+            const systemId = ultimoDoc?.systemId || "N/A";
+            const ultimoStatus = ultimoDoc?.docStatus || "N/A";
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${file.name}</td><td>${systemId}</td><td>${ultimoStatus}</td>`;
+            tableBody.appendChild(row);
+          } catch (error) {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${file.name}</td><td colspan="2">Error processing JSON</td>`;
+            tableBody.appendChild(row);
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

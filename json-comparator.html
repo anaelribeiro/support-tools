@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Posting Attempts Comparator - Report JSON</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6fa; margin: 0; padding: 0; }
+    header { background-color: #009688; padding: 32px 0; margin-bottom: 24px; }
+    header .header-wrapper { max-width: 980px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px 32px; text-align: center; }
+    header h1 { margin: 0 0 4px 0; font-size: 2rem; color: #004D40; }
+    header p { margin: 0; color: #00796b; font-size: 1rem; }
+    .container { max-width: 980px; margin: auto; background: #fff; border-radius: 13px; box-shadow: 0 3px 18px #c7d3eb; padding: 30px; margin-bottom: 40px; }
+    .btn { padding: 10px 18px; background: #009688; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+    .btn:hover { background: #00796b; }
+    select { padding: 6px; border-radius: 6px; border: 1px solid #b2b2b2; margin-right: 12px;}
+    table { border-collapse: collapse; width: 100%; background: #fafcff;}
+    th, td { border: 1px solid #dbe6ed; padding: 8px; }
+    th { background: #ffe9b5; color: #ae7100; font-size: 1.07em; }
+    tr:nth-child(even) { background: #f6f8fb;}
+    .diff-added { background: #e7ffe7; color: #0a730a; font-weight:bold;}
+    .diff-removed { background: #ffe6e6; color: #b90000; font-weight:bold;}
+    .diff-changed { background: #fffacb;}
+    .info-box { background: #e4ecfc; padding: 8px 15px; border-radius: 7px; color: #20427a; margin-bottom: 20px;}
+    .small { font-size: 0.97em; color: #646464;}
+    @media (max-width: 800px) { .container { padding:8px;} table th, table td { padding:4px 4px;} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-wrapper">
+    <h1>Posting Attempts Comparator</h1>
+    <p>Compare multiple posting attempts of the same report</p>
+  </div>
+</header>
+<div class="container" style="max-width:980px;margin:0 auto 40px;">
+  <div class="info-box">
+    Load your JSON file (with multiple posting attempts of the same report).<br>
+    Choose two attempts to compare. Only the actual differences will be shown!
+  </div>
+  <input type="file" id="fileInput" accept=".json" class="btn"/>
+  <button class="btn" id="loadSampleBtn" style="background:#009688;margin-left:10px;">🚀 Load sample data</button>
+  <div id="selectArea" style="margin:24px 0; display:none;">
+    <div style="margin-bottom:12px;">
+      <b>Select report:</b>
+      <select id="reportIdSelect"></select>
+    </div>
+    <div>
+      <b>Compare attempts:</b>
+      <select id="version1"></select>
+      <select id="version2"></select>
+      <button class="btn" onclick="compareVersions()">Compare</button>
+    </div>
+  </div>
+  <div id="diffResult"></div>
+</div>
+
+<script>
+let reportsMap = {};
+let reportVersions = {};
+const arrayIdFields = ['reportEntryId', 'allocationId', 'entryId', 'expenseId', 'id'];
+
+function isEmpty(val) {
+  return val === undefined || val === null || val === "";
+}
+
+document.getElementById('loadSampleBtn').onclick = function() {
+  const sample = { fIDocuments: [
+    { docType: 'expense', id: 'doc-001', entityId: 'p0039524demo', document: { report: { reportId: 'RPT-001', reportName: 'Q3 Business Trip', totalApprovedAmount: 843.39, employeeCurrencyAlphaCode: 'USD' }, expenseEntry: [{ entryId: 'ENTRY-001', expenseTypeName: 'Airfare', entryApprovedAmount: 580.00, entryCurrAlphaCode: 'USD', entryDate: '2026-07-01T00:00:00Z', entryLocationName: 'New York, USA' }, { entryId: 'ENTRY-002', expenseTypeName: 'Hotel', entryApprovedAmount: 263.39, entryCurrAlphaCode: 'USD', entryDate: '2026-07-02T00:00:00Z', entryLocationName: 'London, UK' }] } },
+    { docType: 'expense', id: 'doc-002', entityId: 'p0039524demo', document: { report: { reportId: 'RPT-001', reportName: 'Q3 Business Trip', totalApprovedAmount: 923.39, employeeCurrencyAlphaCode: 'USD' }, expenseEntry: [{ entryId: 'ENTRY-001', expenseTypeName: 'Airfare', entryApprovedAmount: 580.00, entryCurrAlphaCode: 'USD', entryDate: '2026-07-01T00:00:00Z', entryLocationName: 'New York, USA' }, { entryId: 'ENTRY-002', expenseTypeName: 'Hotel', entryApprovedAmount: 263.39, entryCurrAlphaCode: 'USD', entryDate: '2026-07-02T00:00:00Z', entryLocationName: 'London, UK' }, { entryId: 'ENTRY-003', expenseTypeName: 'Meals & Entertainment', entryApprovedAmount: 80.00, entryCurrAlphaCode: 'USD', entryDate: '2026-07-03T00:00:00Z', entryLocationName: 'London, UK' }] } }
+  ]};
+  prepareReports(sample);
+};
+
+document.getElementById('fileInput').onchange = function(e){
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    let data;
+    try { data = JSON.parse(ev.target.result); }
+    catch (err) {
+      alert('Error reading JSON: ' + err);
+      return;
+    }
+    prepareReports(data);
+  };
+  reader.readAsText(file);
+};
+
+function prepareReports(jsonData) {
+  const docs = jsonData.fIDocuments || jsonData.documents || [];
+  reportsMap = {};
+  reportVersions = {};
+  let tentativaCounts = {};
+  for (const docObj of docs) {
+    const doc = docObj.document || docObj;
+    const report = doc.report || {};
+    const reportId = report.reportId || docObj.entityId || docObj.id || "unknown";
+    tentativaCounts[reportId] = (tentativaCounts[reportId] || 0) + 1;
+    const tentativa = tentativaCounts[reportId];
+    if (!reportsMap[reportId]) reportsMap[reportId] = [];
+    reportsMap[reportId].push({tentativa, reportName: report.reportName || '', docObj});
+  }
+  const repSel = document.getElementById('reportIdSelect');
+  repSel.innerHTML = '';
+  Object.keys(reportsMap).forEach(rid => repSel.appendChild(new Option(rid, rid)));
+  repSel.onchange = () => updateVersions(repSel.value);
+  document.getElementById('selectArea').style.display = 'block';
+  updateVersions(repSel.value);
+}
+
+function updateVersions(reportId) {
+  reportVersions = reportsMap[reportId];
+  ['version1', 'version2'].forEach(selectId => {
+    const sel = document.getElementById(selectId);
+    sel.innerHTML = '';
+    reportVersions.forEach((ver, i) => sel.appendChild(new Option(`Attempt ${ver.tentativa} – ${ver.reportName}`, i)));
+  });
+}
+
+function diffObjects(obj1, obj2, prefix='') {
+  let diffs = [];
+  const keys = new Set([...Object.keys(obj1 || {}), ...Object.keys(obj2 || {})]);
+
+  keys.forEach(key => {
+    const fullPath = prefix ? `${prefix}.${key}` : key;
+    const val1 = obj1 ? obj1[key] : undefined;
+    const val2 = obj2 ? obj2[key] : undefined;
+
+    if (typeof val1 === 'object' && typeof val2 === 'object' && val1 && val2) {
+      diffs.push(...diffObjects(val1, val2, fullPath));
+    } else if (JSON.stringify(val1) !== JSON.stringify(val2)) {
+      diffs.push(`<tr class="diff-changed"><td>${fullPath}</td><td>${JSON.stringify(val1)}</td><td>${JSON.stringify(val2)}</td></tr>`);
+    }
+  });
+
+  return prefix === '' && diffs.length ? `<table><tr><th>Field</th><th>Old value</th><th>New value</th></tr>${diffs.join('')}</table>` : diffs;
+}
+
+function compareVersions() {
+  const v1 = reportVersions[document.getElementById('version1').value];
+  const v2 = reportVersions[document.getElementById('version2').value];
+  document.getElementById('diffResult').innerHTML = diffObjects(v1.docObj, v2.docObj) || '<div class="info-box">No differences found.</div>';
+}
+</script>
+</body>
+</html>

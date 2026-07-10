@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Formatter</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6fa; margin: 0; padding: 0; }
+    header { background-color: #009688; padding: 32px 0; margin-bottom: 24px; }
+    header .header-wrapper { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px 32px; text-align: center; }
+    header h1 { margin: 0 0 4px 0; font-size: 2rem; color: #004D40; }
+    header p { margin: 0; color: #00796b; font-size: 1rem; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px 40px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 3px 14px #c7d3eb; padding: 24px; margin-bottom: 20px; }
+    label { display: block; font-weight: 600; color: #1f2937; margin-bottom: 8px; }
+    textarea { width: 100%; height: 200px; font-family: monospace; font-size: 14px; padding: 10px; border-radius: 8px; border: 1.5px solid #b3c2d4; resize: vertical; box-sizing: border-box; }
+    textarea:focus { outline: none; border-color: #009688; }
+    .btn-row { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+    button { padding: 10px 20px; border: none; background: #009688; color: white; border-radius: 7px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    button:hover { background: #00796b; }
+    .btn-sample { background: #e8f5f3; color: #009688; border: 2px solid #009688; }
+    .btn-sample:hover { background: #009688; color: #fff; }
+    pre { background: #1e2230; color: #e1e8ef; padding: 16px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; font-size: 14px; }
+    .error { color: #ff6b6b; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrapper">
+      <h1>JSON Formatter</h1>
+      <p>Paste your JSON and format it instantly</p>
+    </div>
+  </header>
+  <div class="container">
+    <div class="card">
+      <label>Paste your JSON here:</label>
+      <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+      <div class="btn-row">
+        <button onclick="formatarJSON()">Format</button>
+        <button class="btn-sample" onclick="loadSample()">🚀 Load sample</button>
+      </div>
+    </div>
+    <div class="card">
+      <label>Result:</label>
+      <pre id="resultado"></pre>
+    </div>
+  </div>
+  <script>
+    function loadSample() {
+      document.getElementById('jsonInput').value = '{"reportId":"RPT-001","reportName":"Q3 Business Trip","totalApprovedAmount":843.39,"currency":"USD","entries":[{"entryId":"ENTRY-001","type":"Airfare","amount":580.00,"date":"2026-07-01","location":"New York, USA"},{"entryId":"ENTRY-002","type":"Hotel","amount":263.39,"date":"2026-07-02","location":"London, UK"}]}';
+      formatarJSON();
+    }
+    function formatarJSON() {
+      const input = document.getElementById('jsonInput').value;
+      const output = document.getElementById('resultado');
+      try {
+        const obj = JSON.parse(input);
+        output.textContent = JSON.stringify(obj, null, 2);
+        output.classList.remove('error');
+      } catch (e) {
+        output.textContent = '❌ Invalid JSON: ' + e.message;
+        output.classList.add('error');
+      }
+    }
+  </script>
+</body>
+</html>

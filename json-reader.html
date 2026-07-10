@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Reader – Expenses</title>
+  <style>
+    /* Seus estilos originais continuam aqui… */
+    body { font-family: Arial, sans-serif; background: #f4f6fa; margin: 0; padding: 38px;}
+    .container { max-width: 1150px; margin: auto; background: #fff; border-radius: 13px; box-shadow: 0 3px 18px #c7d3eb; padding: 30px;}
+    h1 { text-align: center; font-size: 2.0rem; margin-bottom: 20px;}
+    .btn { padding: 10px 18px; background: #0d63af; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 1rem;}
+    .btn:hover { background: #094677; }
+    .block { margin-bottom: 38px; border:1px solid #e2e9f3; border-radius: 13px; padding: 22px;}
+    .block h2 { color: #0d63af; margin-bottom: 12px; font-size: 1.15rem;}
+    table { border-collapse: collapse; width: 100%; background: #fafcff;}
+    th, td { border: 1px solid #dbe6ed; padding: 8px; }
+    th { background: #e6f2ff; }
+    tr:nth-child(even) { background: #808285;}
+    .modal-bg {
+      display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(30,25,18,0.23); align-items: center; justify-content: center;
+    }
+    .modal {
+      background: #fff; border-radius: 13px; padding: 38px 20px 22px 20px;
+      box-shadow: 0 10px 44px #0003;
+      max-width: 1200px; min-width: 220px; max-height: 93vh; overflow-y: auto; position: relative;
+    }
+    .modal h3 { color: #a26520; margin-top:0; font-size:1.14em; font-weight:bold;}
+    .close-x { position: absolute; top: 8px; right: 13px; font-size: 1.7em; color: #d27823; cursor: pointer; font-weight: bold; opacity: 0.85; background: none; border: none;}
+    .close-x:hover { color: #962500; opacity:1; }
+    .modal-table { border-collapse: collapse; width: 100%; background: #fff; margin-bottom: 18px;}
+    .modal-table th, .modal-table td { border: 1px solid #ead0bb; padding: 6px 7px; font-size: 0.99em;}
+    .modal-table th { background: #f6e6cd; }
+    .small { font-size:0.97em; color:#6b6b6b;}
+    .field-label { color:#304057; font-weight:bold;}
+    .field-section {margin-bottom:14px;}
+    .info-table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 18px;
+      background: #fafcff;
+    }
+    .info-table th, .info-table td {
+      border: 1px solid #dbe6ed;
+      padding: 8px 12px;
+      font-size: 1em;
+    }
+    .info-table th.table-header {
+      background: #ffe9b5 !important;
+      color: #ae7100;
+      font-weight: bold;
+      font-size: 1.08em;
+      text-align: left;
+    }
+    .info-table tr:nth-child(even) { background: #f6f8fb; }
+    @media (max-width: 900px) {
+      .container { padding:7px; }
+      .modal { max-width:99vw; padding:8px 2vw 8px 2vw;}
+      .block { padding: 8px;}
+      .modal-table th, .modal-table td { font-size:0.97em; padding:3px 5px;}
+      .info-table th, .info-table td { padding: 5px 6px; font-size:0.96em;}
+    }
+    .status-failure {
+      color: #b90000 !important;
+      font-weight: bold;
+      background: #ffe6e6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+    .status-success {
+      color: #128610 !important;
+      font-weight: bold;
+      background: #e7ffe7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    /* ======= Header with Credits ======= */
+    header {
+      background-color: #009688; /* teal */
+      padding: 40px 0;
+      margin-bottom: 20px;
+    }
+    header .header-wrapper {
+      max-width: 1150px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      color: #004D40; /* dark teal */
+    }
+    header p.creditos {
+      margin: 6px 0 0 0;
+      font-size: 1rem;
+      color: #00796B; /* medium teal */
+    }
+
+    .expenses-table tr:nth-child(even) td {
+  background: #f3f4f6 !important;
+}
+
+.expenses-table tr:nth-child(odd) td {
+  background: #ffffff !important;
+}
+
+.expenses-table td,
+.expenses-table th {
+  vertical-align: middle;
+}
+
+.expenses-table td:last-child {
+  min-width: 220px;
+  white-space: normal;
+}
+
+.expenses-table td:last-child button,
+.expenses-table td:last-child a {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0;
+  text-align: center;
+}
+
+.expenses-table td:last-child .details-btn,
+.expenses-table td:last-child .journal-btn,
+.expenses-table td:last-child .allocations-btn {
+  max-width: 220px;
+}
+  </style>
+</head>
+<body>
+  <!-- ======= HEADER WITH CREDITS ======= -->
+  <header>
+    <div class="header-wrapper">
+      <h1>JSON Reader</h1>
+      
+    </div>
+  </header>
+  <!-- ======= END HEADER WITH CREDITS ======= -->
+
+  <div class="container">
+    <div style="text-align:center; margin-bottom:24px;">
+      <input type="file" id="fileInput" class="btn" accept=".json"/>
+      <button class="btn" id="loadSampleBtn" style="background:#009688;margin-left:10px;">Load sample JSON</button>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal" id="modalContent">
+      <button class="close-x" onclick="closeModal()">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    // ======= TODO: All original JavaScript logic remains unchanged, only visible text translated =======
+    const fieldDescriptions = {
+      "docType": "Type of document (e.g., expense, invoice).",
+      "companyId": "Identifier of the company.",
+      "entityId": "Identifier of the entity.",
+      "companyUuid": "Company UUID.",
+      "systemId": "ERP system ID.",
+      "docStatus": "Document status in integration.",
+      "id": "Unique ID of the document.",
+      "employeeId": "Employee ID. Used as Vendor ID or Payroll ID.",
+      "employeeFirstName": "Employee first name.",
+      "employeeLastName": "Employee last name.",
+      "loginId": "Employee login ID.",
+      // ... add more field descriptions as needed ...
+    };
+
+    let despesasDetalhes = {};
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      return d.toLocaleDateString('en-GB'); // Keep British format (dd/mm/yyyy) or adjust to 'en-US' if needed
+    }
+    function closeModal() {
+      document.getElementById('modalBg').style.display = 'none';
+    }
+    document.getElementById('modalBg').onclick = function(event){
+      if(event.target === this) { closeModal(); }
+    };
+
+    function renderObjTable(obj, title, nivel = 0) {
+      if (!obj || typeof obj !== 'object') return '';
+      let rows = Object.keys(obj).sort().map(key => {
+        let val = obj[key];
+        let desc = fieldDescriptions[key] || '';
+        if (val && typeof val === 'object') {
+          let uniq = Math.random().toString(36).substr(2,9);
+          let subtitulo = Array.isArray(val) ? `${key} [${val.length}]` : key;
+          return `<tr>
+            <th style="background:#fcf6e8;" colspan="2">
+              <button class="details-btn" onclick="document.getElementById('c_${uniq}').style.display =
+                document.getElementById('c_${uniq}').style.display === 'block' ? 'none' : 'block'">${subtitulo} ▼</button>
+              <div style="display:none; margin-top:7px;" id="c_${uniq}">
+                ${Array.isArray(val)
+                  ? val.map((v, idx) => `<div style="margin-bottom:7px;">
+                      <span class="small" style="color:#c0771c;">${key} #${idx+1}</span>
+                      ${renderObjTable(v, key, nivel+1)}
+                    </div>`).join('')
+                  : renderObjTable(val, key, nivel+1)
+                }
+              </div>
+            </th>
+            <td>${desc}</td>
+          </tr>`;
+        } else {
+          return `<tr>
+            <th style="text-align:left;">${key}</th>
+            <td>${formatValue(val)}</td>
+            <td>${desc}</td>
+          </tr>`;
+        }
+      }).join('');
+      return `<table class="modal-table"><thead><tr>
+        <th style="width:180px;">Field</th>
+        <th style="width:300px;">Value</th>
+        <th>Description</th>
+      </tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    function formatValue(val) {
+      if (Array.isArray(val)) {
+        return `<span class="small" style="color:#647;">[Array of ${val.length}]</span>`;
+      }
+      if (val && typeof val === 'object') {
+        return `<span class="small" style="color:#844;">{object}</span>`;
+      }
+      return val !== undefined && val !== null ? String(val) : '';
+    }
+
+    function renderInfoTable(obj, fields, titulo) {
+      let html = `<table class="info-table">
+        <thead><tr><th colspan="3" class="table-header">${titulo}</th></tr>
+        <tr>
+          <th style="width:180px;">Field</th>
+          <th style="width:350px;">Value</th>
+          <th>Description</th>
+        </tr></thead><tbody>`;
+      fields.forEach(fld => {
+        if (obj[fld] !== undefined && obj[fld] !== null && obj[fld] !== '')
+          html += `<tr>
+            <td>${fld}</td>
+            <td>${
+              fld === "docStatus"
+                ? (obj[fld] === "POSTING_CONFIRMED_FAILURE"
+                    ? `<span class="status-failure">${obj[fld]}</span>`
+                    : `<span class="status-success">${obj[fld]}</span>`
+                  )
+                : obj[fld]
+            }</td>
+            <td>${fieldDescriptions[fld] || ''}</td>
+          </tr>`;
+      });
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    function renderReportInfoTable(report, fields, titulo) {
+      let html = `<table class="info-table">
+        <thead><tr><th colspan="2" class="table-header">${titulo}</th></tr>
+        <tr>
+          <th style="width:210px;">Field</th>
+          <th style="width:400px;">Value</th>
+        </tr></thead><tbody>`;
+      fields.forEach(fld => {
+        if (report[fld] !== undefined && report[fld] !== null && report[fld] !== '')
+          html += `<tr>
+            <td>${fld}</td>
+            <td>${report[fld]}</td>
+          </tr>`;
+      });
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    window.showNullReportFields = function(reportObj) {
+      let rows = Object.keys(reportObj)
+        .filter(k => reportObj[k] === null || reportObj[k] === '')
+        .map(k =>
+          `<tr>
+            <td>${k}</td>
+            <td><i style="color:#aaa;">${
+              reportObj[k] === null ? 'null' : '""'
+            }</i></td>
+          </tr>`
+        ).join('');
+      if (!rows) rows = '<tr><td colspan="2" style="color:#5a5;">No null fields in this report.</td></tr>';
+      let html = `<h3>Null Report Fields</h3>
+        <table class="modal-table"><thead>
+          <tr><th>Field</th><th>Value</th></tr>
+        </thead><tbody>${rows}</tbody></table>`;
+      document.getElementById('modalBg').style.display = 'flex';
+      document.getElementById('modalBody').innerHTML = html;
+    };
+
+    function renderJson(data) {
+      let docs = (data.fIDocuments || data.documents || []);
+      if (!Array.isArray(docs)) docs = [];
+
+      // Group by reportId, preserving order of first appearance
+      const groups = {};
+      const groupOrder = [];
+      docs.forEach((docObj, idx) => {
+        const doc = docObj.document || docObj;
+        const reportId = (doc.report || {}).reportId || docObj.entityId || docObj.id || `doc_${idx}`;
+        if (!groups[reportId]) { groups[reportId] = []; groupOrder.push(reportId); }
+        groups[reportId].push({docObj, doc, idx});
+      });
+
+      let html = '';
+      let globalIdx = 0;
+
+      groupOrder.forEach(reportId => {
+        const attempts = groups[reportId];
+        const total = attempts.length;
+
+        attempts.forEach((item, attemptPos) => {
+          const { docObj, doc } = item;
+          const isLast = attemptPos === total - 1;
+          const attemptNum = attemptPos + 1;
+          const idx = globalIdx++;
+          const blockId = `block_${idx}`;
+
+          const reportObj = doc.report || {};
+          const reportName = reportObj.reportName || reportId;
+          const docStatus = docObj.docStatus || '';
+          const statusBadge = docStatus === 'POSTING_CONFIRMED_FAILURE'
+            ? `<span class="status-failure">${docStatus}</span>`
+            : docStatus ? `<span class="status-success">${docStatus}</span>` : '';
+
+          if (!isLast) {
+            // Previous attempt — collapsed
+            html += `<div class="block" style="background:#f5f5f5;border:1px dashed #bbb;margin-bottom:8px;">
+              <div style="cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="
+                const c=document.getElementById('${blockId}');
+                const arr=document.getElementById('arr_${blockId}');
+                if(c.style.display==='none'){c.style.display='block';arr.textContent='▼';}
+                else{c.style.display='none';arr.textContent='▶';}
+              ">
+                <span id="arr_${blockId}" style="font-size:1.1em;color:#888;">▶</span>
+                <span style="color:#888;font-size:0.97em;">Attempt ${attemptNum} of ${total} — ${reportName} &nbsp; ${statusBadge}</span>
+              </div>
+              <div id="${blockId}" style="display:none;margin-top:14px;">`;
+          } else {
+            // Latest attempt — expanded
+            html += `<div class="block">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                <span style="background:#0d63af;color:#fff;font-size:0.85em;padding:2px 10px;border-radius:5px;">Latest attempt (${attemptNum} of ${total})</span>
+                <span style="color:#444;font-weight:bold;">${reportName}</span>
+                ${statusBadge}
+              </div>
+              <div id="${blockId}">`;
+          }
+
+        // Display main document fields
+        let mainDocFields = [
+          'docType','companyId','entityId','companyUuid','systemId','id','docStatus'
+        ];
+        html += renderInfoTable(docObj, mainDocFields, 'Document Information');
+
+        // 1.1. REPORT HEADER
+        let mainReportFields = [
+          'reportId','reportName','ledgerCode','payrollPayIndicator',
+          'totalApprovedAmount','employeeCurrencyAlphaCode','reportNumber',
+          'reportStartDate','reportEndDate','reportSubmitDate'
+        ];
+        const hasMainReport = mainReportFields.some(fld => reportObj[fld]);
+        if (hasMainReport) {
+          const entries = (doc.expenseEntry || []);
+          const hasExpensePay = entries.some(e => e.expensePayIndicator === 'Y');
+          const hasExpensePayAccounting = entries.some(e => e.expensePayAccountingIndicator === 'Y');
+          const expensePayBadges = [
+            hasExpensePay ? `<span style="background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:5px;padding:3px 10px;font-size:0.97em;font-weight:bold;margin-right:8px;">⚠️ expensePayIndicator: Y</span>` : '',
+            hasExpensePayAccounting ? `<span style="background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:5px;padding:3px 10px;font-size:0.97em;font-weight:bold;margin-right:8px;">⚠️ expensePayAccountingIndicator: Y</span>` : ''
+          ].filter(Boolean).join('');
+          html += `<div class="block" style="background:#fcfbef; margin-bottom:22px;">
+            <b style="color:#987800;font-size:1.06em;">Report Summary:</b>
+            ${expensePayBadges ? `<div style="margin:10px 0;">${expensePayBadges}</div>` : ''}
+            ${renderReportInfoTable(reportObj, mainReportFields, 'Report Summary')}
+            <button class="btn" style="background:#e3e1c9; color:#997100;margin-top:10px;"
+              onclick='showNullReportFields(${JSON.stringify(reportObj).replace(/'/g,"&apos;")})'>View Null Report Fields</button>
+          </div>`;
+        }
+
+        // 2. Employee data
+        let emp = doc.employee || {};
+        let empFields = Object.keys(emp);
+        if (empFields.length > 0) {
+          html += renderInfoTable(emp, empFields, 'Employee');
+        }
+
+        // 3. List of expenses
+        let entries = (doc.expenseEntry || []);
+        if (entries.length > 0) {
+          html += `<div class="field-section"><b>Expenses:</b>
+            <button class="btn" style="margin-left:12px;background:#1a7a1a;font-size:0.93em;padding:6px 14px;" onclick="downloadExcel_${idx}()">⬇️ Download Excel</button>
+            <table>
+            <thead><tr>
+              <th>Entry ID</th>
+              <th>Expense Type</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Date</th>
+              <th>Location</th>
+              <th>Payment Type</th>
+              <th>Details</th>
+            </tr></thead>
+            <tbody>`;
+          entries.forEach((entry, i) => {
+            let detailId = `dsp_${idx}_${i}`;
+            despesasDetalhes[detailId] = entry;
+            const hasEntryTax = Array.isArray(entry.tax) && entry.tax.length > 0;
+            const hasAllocTax = Array.isArray(entry.allocation) && entry.allocation.some(a => Array.isArray(a.tax) && a.tax.length > 0);
+            const hasAllocJournal = Array.isArray(entry.allocation) && entry.allocation.some(a => Array.isArray(a.journal) && a.journal.length > 0);
+            const hasAlloc = Array.isArray(entry.allocation) && entry.allocation.length > 0;
+            html += `<tr>
+              <td><span style="font-family:monospace;font-size:0.92em;">${entry.entryId ?? ''}</span></td>
+              <td>${entry.expenseTypeName ?? ''}</td>
+              <td>${entry.entryDescription ?? ''}</td>
+              <td>${entry.entryApprovedAmount ?? ''}</td>
+              <td>${entry.entryCurrAlphaCode ?? ''}</td>
+              <td>${formatDate(entry.entryDate)}</td>
+              <td>${entry.entryLocationName ?? ''}</td>
+              <td>${entry.reportEntryPaymentTypeName ?? entry.reportEntryPaymentTypeCode ?? ''}</td>
+              <td>
+                <button class="details-btn" onclick="showDetails('${detailId}')">🔎 Details</button>
+                ${
+                  (hasEntryTax || hasAllocTax)
+                    ? `<button class="details-btn" style="margin-left:4px;" onclick="showTax('${detailId}')">💸 View Taxes</button>`
+                    : ''
+                }
+                ${
+                  hasAllocJournal
+                    ? `<button class="details-btn" style="margin-left:4px;background:#f3eaea;color:#7a1a00;" onclick="showJournal('${detailId}')">📑 View Journal</button>`
+                    : ''
+                }
+                ${
+                  hasAlloc
+                    ? `<button class="details-btn" style="margin-left:4px;background:#ecebf7;color:#2b2770;" onclick="showAlloc('${detailId}')">🗂️ View Allocations</button>`
+                    : ''
+                }
+              </td>
+            </tr>`;
+          });
+          html += `</tbody></table></div>`;
+
+          // Download Excel function for this document
+          const capturedEntries = entries;
+          const capturedIdx = idx;
+          window[`downloadExcel_${idx}`] = function() {
+            const cols = ['entryId','expenseTypeName','entryDescription','entryApprovedAmount','entryCurrAlphaCode','entryDate','entryLocationName','reportEntryPaymentTypeName'];
+            const headers = ['Entry ID','Expense Type','Description','Amount','Currency','Date','Location','Payment Type'];
+            const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const formatD = v => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('en-GB'); };
+            let rows = capturedEntries.map(e => '<tr>' + cols.map((c,i) => {
+              let v = c === 'entryDate' ? formatD(e[c]) : (e[c] ?? '');
+              return `<td>${esc(v)}</td>`;
+            }).join('') + '</tr>').join('');
+            const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+              <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Expenses</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+              <body><table><thead><tr>${headers.map(h=>`<th><b>${h}</b></th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></body></html>`;
+            const blob = new Blob([html], {type: 'application/vnd.ms-excel;charset=utf-8;'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `expenses_doc${capturedIdx + 1}.xls`;
+            a.click();
+          };
+        } else {
+          html += `<div class="field-section"><b>Expenses:</b> No expenses found.</div>`;
+        }
+
+        html += `</div></div>`;  // close blockId div + outer block div
+        });  // end attempts.forEach
+      });    // end groupOrder.forEach
+      document.getElementById('content').innerHTML = html;
+    }
+
+    window.showDetails = function(detailId) {
+      const obj = despesasDetalhes[detailId];
+      if (!obj) return;
+      let html = `<h3>Complete Details</h3>`;
+      html += renderObjTable(obj, 'Details');
+      document.getElementById('modalBg').style.display = 'flex';
+      document.getElementById('modalBody').innerHTML = html;
+    };
+
+    window.showTax = function(detailId) {
+      const entry = despesasDetalhes[detailId];
+      if (Array.isArray(entry.tax) && entry.tax.length > 0) {
+        // Added observation about field mapping without altering logic
+        let html = `
+          <h3>Expense Taxes</h3>
+          <div class=”small” style=”margin-bottom:12px; color:#555;”>
+            Note: the “reclaim tax code” in the JSON corresponds to the 2-character Tax Code in the ERP;<br>
+            the “tax code” in the JSON corresponds to the 4-character Condition Type in the ERP.
+          </div>
+        `;
+        html += entry.tax.map((tax, i) => `
+          <div style="margin-bottom:14px;">
+            <div class="small" style="color:#986500; margin-bottom:3px;">Tax #${i + 1}</div>
+            ${renderObjTable(tax, 'Tax', 1)}
+          </div>
+        `).join('');
+        document.getElementById('modalBg').style.display = 'flex';
+        document.getElementById('modalBody').innerHTML = html;
+        return;
+      }
+      if (Array.isArray(entry.allocation)) {
+        const allTaxes = entry.allocation.flatMap(a => Array.isArray(a.tax) ? a.tax : []);
+        if (allTaxes.length) {
+          // Added observation about field mapping without altering logic
+          let html = `
+            <h3>Expense Taxes (by Allocation)</h3>
+            <div class=”small” style=”margin-bottom:12px; color:#555;”>
+              Note: the “reclaim tax code” in the JSON corresponds to the 2-character Tax Code in the ERP;<br>
+              the “tax code” in the JSON corresponds to the 4-character Condition Type in the ERP.
+            </div>
+          `;
+          html += allTaxes.map((tax, i) => `
+            <div style="margin-bottom:14px;">
+              <div class="small" style="color:#986500; margin-bottom:3px;">Tax #${i + 1}</div>
+              ${renderObjTable(tax, 'Tax', 1)}
+            </div>
+          `).join('');
+          document.getElementById('modalBg').style.display = 'flex';
+          document.getElementById('modalBody').innerHTML = html;
+          return;
+        }
+      }
+      alert("No tax information found for this entry.");
+    };
+
+    window.showJournal = function(detailId) {
+      const entry = despesasDetalhes[detailId];
+      if (!entry || !Array.isArray(entry.allocation)) {
+        alert("No journal information found for this entry.");
+        return;
+      }
+      const allJournals = entry.allocation.flatMap(a => Array.isArray(a.journal) ? a.journal : []);
+      if (!allJournals.length) {
+        alert("No journal information found for this entry.");
+        return;
+      }
+      let html = `<h3>Expense Journals</h3>`;
+      html += allJournals.map((jr, i) => `
+        <div style="margin-bottom:14px;">
+          <div class="small" style="color:#986500; margin-bottom:3px;">Journal #${i + 1}</div>
+          ${renderObjTable(jr, 'Journal', 1)}
+        </div>
+      `).join('');
+      document.getElementById('modalBg').style.display = 'flex';
+      document.getElementById('modalBody').innerHTML = html;
+    };
+
+    window.showAlloc = function(detailId) {
+      const entry = despesasDetalhes[detailId];
+      if (!entry || !Array.isArray(entry.allocation) || entry.allocation.length === 0) {
+        alert("No allocation found for this entry.");
+        return;
+      }
+      let html = `<h3>Expense Allocations</h3>`;
+      html += entry.allocation.map((al, i) => {
+        const filtered = {};
+        Object.keys(al).forEach(k => {
+          if (al[k] !== null && al[k] !== "" && !(Array.isArray(al[k]) && al[k].length === 0)) {
+            filtered[k] = al[k];
+          }
+        });
+        return `
+          <div style="margin-bottom:14px;">
+            <div class="small" style="color:#233;">Allocation #${i + 1}</div>
+            ${renderObjTable(filtered, 'Allocation', 1)}
+          </div>
+        `;
+      }).join('');
+      document.getElementById('modalBg').style.display = 'flex';
+      document.getElementById('modalBody').innerHTML = html;
+    };
+
+    document.getElementById('fileInput').onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        let data = null;
+        try {
+          data = JSON.parse(ev.target.result);
+        } catch (err) {
+          document.getElementById('content').innerHTML = `<div class="error-box">Error reading JSON: ${err}</div>`;
+          return;
+        }
+        despesasDetalhes = {};
+        renderJson(data);
+      };
+      reader.readAsText(file);
+    };
+
+    document.getElementById('loadSampleBtn').onclick = function() {
+      const sample = {
+        fIDocuments: [
+          {
+            docType: "expense", companyId: "64322", entityId: "p0039524demo",
+            companyUuid: "237449e4-a75e-450c-8466-demo", systemId: "ERP-SYS-001",
+            docStatus: "POSTING_CONFIRMED_SUCCESS", id: "doc-sample-001",
+            document: {
+              report: {
+                reportId: "RPT-DEMO-001", reportName: "Business Trip — Q3 2026",
+                ledgerCode: "DEFAULT", totalApprovedAmount: 843.39,
+                employeeCurrencyAlphaCode: "USD", reportNumber: "R1234567890",
+                reportStartDate: "2026-07-01T00:00:00.000Z",
+                reportEndDate: "2026-07-05T00:00:00.000Z",
+                reportSubmitDate: "2026-07-06T00:00:00.000Z"
+              },
+              employee: {
+                employeeId: "EMP-00123", employeeFirstName: "John",
+                employeeLastName: "Smith", loginId: "john.smith@company.com"
+              },
+              expenseEntry: [
+                {
+                  entryId: "449D719578B5D444B3180E91190C8F1E",
+                  expenseTypeName: "Airfare", entryDescription: "Flight NYC-London",
+                  entryApprovedAmount: 580.00, entryCurrAlphaCode: "USD",
+                  entryDate: "2026-07-01T00:00:00.000Z", entryLocationName: "New York, USA",
+                  reportEntryPaymentTypeName: "Corporate Card",
+                  tax: [{ taxCode: "VAT", taxAmount: 58.00, reclaimTaxCode: "GB1", reclaimAmount: 29.00 }],
+                  allocation: [{ allocationId: "ALLOC-001", journal: [{ accountCode: "6100", amount: 580.00, currency: "USD" }] }]
+                },
+                {
+                  entryId: "947212F54824B840AAB8FFD9727558FA",
+                  expenseTypeName: "Meals & Entertainment", entryDescription: "Client dinner",
+                  entryApprovedAmount: 143.39, entryCurrAlphaCode: "USD",
+                  entryDate: "2026-07-03T00:00:00.000Z", entryLocationName: "London, UK",
+                  reportEntryPaymentTypeName: "Cash",
+                  expensePayIndicator: "N", expensePayAccountingIndicator: "N",
+                  allocation: [{ allocationId: "ALLOC-002", journal: [{ accountCode: "6200", amount: 143.39, currency: "USD" }] }]
+                },
+                {
+                  entryId: "ADBE87774B588542A5CB0681520508CA",
+                  expenseTypeName: "Hotel", entryDescription: "4 nights — The Savoy",
+                  entryApprovedAmount: 120.00, entryCurrAlphaCode: "GBP",
+                  entryDate: "2026-07-04T00:00:00.000Z", entryLocationName: "London, UK",
+                  reportEntryPaymentTypeName: "Corporate Card",
+                  allocation: [{ allocationId: "ALLOC-003", journal: [{ accountCode: "6300", amount: 120.00, currency: "GBP" }] }]
+                }
+              ]
+            }
+          }
+        ]
+      };
+      despesasDetalhes = {};
+      renderJson(sample);
+    };
+  </script>
+</body>
+</html>

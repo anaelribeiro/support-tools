@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" type="text/css" href="index.css" />
+  <script src="index.js"></script>
+</head>
+<body>
+  <div class="ise-extension">
+    <div class="ise-extension-content">
+      <div class="app-shell">
+        <aside class="sidebar">
+          <div class="brand">
+            <div class="brand-title">Support Tooling Suite</div>
+            <div class="brand-subtitle"></div>
+          </div>
+
+          <button class="nav-btn active" data-target="status-reader.html">Status Reader</button>
+          <button class="nav-btn" data-target="json-reader.html">JSON Reader</button>
+          <button class="nav-btn" data-target="mapping-services-reader.html">Data Reader</button>
+          <button class="nav-btn" data-target="json-comparator.html">JSON Comparator</button>
+          <button class="nav-btn" data-target="json-formatter.html">JSON Formatter</button>
+
+          <div class="sidebar-search">
+            <div class="sidebar-search-label">Search in page</div>
+            <input type="text" id="sidebarSearch" placeholder="Type to search…" autocomplete="off" />
+            <div class="sidebar-search-nav">
+              <span id="sidebarSearchCount" class="search-count"></span>
+              <button id="sidebarPrev" title="Previous">▲</button>
+              <button id="sidebarNext" title="Next">▼</button>
+              <button id="sidebarClear" title="Clear">✕</button>
+            </div>
+          </div>
+        </aside>
+
+        <main class="main-panel">
+          <div id="floatSearch" class="float-search" style="display:none;">
+            <input type="text" id="floatSearchInput" placeholder="Search in page…" autocomplete="off" />
+            <span id="floatSearchCount" class="search-count"></span>
+            <button id="floatPrev" title="Previous">▲</button>
+            <button id="floatNext" title="Next">▼</button>
+            <button id="floatClose" title="Close">✕</button>
+          </div>
+          <iframe id="toolFrame" class="tool-frame" src="status-reader.html" title="Support Tools"></iframe>
+        </main>
+      </div>
+    </div>
+  </div>
+  <script>
+    // ===== Page Search (sidebar + Ctrl+F float bar) =====
+    let searchMatches = [];
+    let searchIndex = 0;
+
+    function getFrameDoc() {
+      const frame = document.getElementById('toolFrame');
+      try { return frame.contentDocument || frame.contentWindow.document; } catch(e) { return null; }
+    }
+
+    function clearHighlights() {
+      const doc = getFrameDoc();
+      if (!doc) return;
+      doc.querySelectorAll('mark.highlight-search').forEach(m => {
+        m.replaceWith(doc.createTextNode(m.textContent));
+      });
+      doc.body.normalize();
+      searchMatches = [];
+      searchIndex = 0;
+    }
+
+    function doSearch(term) {
+      clearHighlights();
+      updateCount();
+      if (!term) return;
+      const doc = getFrameDoc();
+      if (!doc) return;
+
+      const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        if (['SCRIPT','STYLE','MARK'].includes(node.parentElement.tagName)) continue;
+        nodes.push(node);
+      }
+
+      const lower = term.toLowerCase();
+      nodes.forEach(n => {
+        let text = n.textContent;
+        let ltext = text.toLowerCase();
+        let idx = 0, parts = [], found = false;
+        while ((idx = ltext.indexOf(lower, idx)) !== -1) {
+          parts.push(document.createTextNode(text.slice(0, idx)));
+          const mark = doc.createElement('mark');
+          mark.className = 'highlight-search';
+          mark.style.cssText = 'background:#ffe066;color:#000;border-radius:3px;padding:0 1px;';
+          mark.textContent = text.slice(idx, idx + term.length);
+          parts.push(mark);
+          text = text.slice(idx + term.length);
+          ltext = text.toLowerCase();
+          idx = 0;
+          found = true;
+        }
+        if (found) {
+          parts.push(document.createTextNode(text));
+          n.replaceWith(...parts);
+        }
+      });
+
+      searchMatches = Array.from(doc.querySelectorAll('mark.highlight-search'));
+      if (searchMatches.length) scrollToMatch(0);
+      updateCount();
+    }
+
+    function scrollToMatch(i) {
+      if (!searchMatches.length) return;
+      searchMatches.forEach(m => m.style.background = '#ffe066');
+      searchIndex = (i + searchMatches.length) % searchMatches.length;
+      const m = searchMatches[searchIndex];
+      m.style.background = '#ff9900';
+      m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      updateCount();
+    }
+
+    function updateCount() {
+      const txt = searchMatches.length ? `${searchIndex + 1}/${searchMatches.length}` : '';
+      document.getElementById('sidebarSearchCount').textContent = txt;
+      document.getElementById('floatSearchCount').textContent = txt;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const sidebarInput = document.getElementById('sidebarSearch');
+      sidebarInput.addEventListener('input', () => doSearch(sidebarInput.value.trim()));
+      document.getElementById('sidebarPrev').addEventListener('click', () => scrollToMatch(searchIndex - 1));
+      document.getElementById('sidebarNext').addEventListener('click', () => scrollToMatch(searchIndex + 1));
+      document.getElementById('sidebarClear').addEventListener('click', () => {
+        sidebarInput.value = ''; clearHighlights(); updateCount();
+      });
+
+      const floatBar = document.getElementById('floatSearch');
+      const floatInput = document.getElementById('floatSearchInput');
+      floatInput.addEventListener('input', () => {
+        sidebarInput.value = floatInput.value;
+        doSearch(floatInput.value.trim());
+      });
+      document.getElementById('floatPrev').addEventListener('click', () => scrollToMatch(searchIndex - 1));
+      document.getElementById('floatNext').addEventListener('click', () => scrollToMatch(searchIndex + 1));
+      document.getElementById('floatClose').addEventListener('click', () => {
+        floatBar.style.display = 'none';
+        floatInput.value = ''; clearHighlights(); updateCount();
+      });
+
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+          e.preventDefault();
+          floatBar.style.display = 'flex';
+          floatInput.focus();
+          floatInput.select();
+        }
+        if (e.key === 'Escape') floatBar.style.display = 'none';
+        if (e.key === 'Enter' && floatBar.style.display !== 'none') {
+          scrollToMatch(e.shiftKey ? searchIndex - 1 : searchIndex + 1);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mapping Services Reader</title>
+  <style>
+    /* ======= Header with Credits ======= */
+    header {
+      background-color: #009688; /* teal */
+      padding: 40px 0;
+      margin-bottom: 20px;
+    }
+    header .header-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      color: #004D40; /* dark teal */
+      text-align: center;
+    }
+    header p.credits {
+      margin: 6px 0 0 0;
+      font-size: 1rem;
+      color: #00796B; /* medium teal */
+      text-align: center;
+    }
+
+    /* === General Page Styles === */
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      margin: 0;
+      padding: 30px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 3px 18px rgba(0, 0, 0, 0.1);
+      padding: 20px 25px;
+    }
+    .intro {
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+      color: #2f3a4a;
+      text-align: center;
+    }
+
+    /* === File Upload Section === */
+    .file-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+    .file-section div {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .file-section label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #2f4668;
+    }
+    .file-section input {
+      padding: 6px;
+      font-size: 1rem;
+      border: 1px solid #aab8c2;
+      border-radius: 4px;
+      background: #f5f8fa;
+    }
+
+    /* === Search Field (Search) === */
+    .search-section {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #searchInput {
+      width: 80%;
+      max-width: 400px;
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: 1px solid #aab8c2;
+      border-radius: 4px;
+      background: #f5f8fa;
+    }
+    #searchInput::placeholder {
+      color: #678;
+    }
+
+    /* === Each Filter Definition Block === */
+    .block {
+      margin-bottom: 28px;
+      border: 2px solid #aecbe0;
+      border-radius: 8px;
+      background: #e8f4ff;
+    }
+    .block-header {
+      background: #0b4f94;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 6px 6px 0 0;
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    .block-content {
+      padding: 18px 22px;
+    }
+    .field-line {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: #1f334b;
+    }
+    .field-label {
+      font-weight: bold;
+      color: #1a2e48;
+    }
+
+    /* === Main Tables and Headers === */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+    }
+    th, td {
+      padding: 10px 14px;
+      border: 1px solid #c8d4e4;
+    }
+    th {
+      background: #0b3c6e;
+      color: #ffffff;
+      font-weight: bold;
+      text-align: left;
+    }
+    tr.filter-row {
+      background: #fff;
+      color: #1f334b;
+    }
+    tr.filter-row:nth-child(even) {
+      background: #f2f8ff;
+    }
+    tr.filter-row:hover {
+      background: #d1e7ff;
+    }
+
+    /* === Detail Buttons === */
+    .details-btn {
+      background: #ff9933;
+      color: #ffffff;
+      border: 1px solid #e67e22;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .details-btn:hover {
+      background: #e68a00;
+      border-color: #cc7a00;
+    }
+
+    /* === Nested Rows/Cells (Details) === */
+    tr.nested-row {
+      background: #f8fcff;
+    }
+    td.nested-cell {
+      padding: 12px;
+      background: #eaf4ff;
+    }
+    .nested-block {
+      padding: 12px;
+      border: 1px solid #a9cfea;
+      border-radius: 5px;
+      background: #ffffff;
+    }
+    .nested-block h3 {
+      margin: 0 0 8px 0;
+      font-size: 1.05rem;
+      color: #0b3c6e;
+      border-bottom: 1px solid #c8d4e4;
+      padding-bottom: 4px;
+    }
+    .nested-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .nested-table th,
+    .nested-table td {
+      padding: 6px 8px;
+      border: 1px solid #d0d8e4;
+      font-size: 0.9rem;
+    }
+    .nested-table th {
+      background: #c8d4e4;
+      color: #0b3c6e;
+      font-weight: bold;
+    }
+
+    /* === Small Text and Highlight === */
+    .small-text {
+      font-size: 0.85rem;
+      color: #555555;
+    }
+    .highlight {
+      color: #b30000;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrapper">
+      <h1>Mapping Services Reader</h1>
+      <p class="credits">Visualize filter definitions, values and partner systems</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="intro">
+      Upload the three JSON files: <strong>filterDefinitions.json</strong>,
+      <strong>filterValues.json</strong>, and <strong>partnerSystems.json</strong>.<br>
+      Once all are loaded, the visualization will appear below.
+    </div>
+
+    <!-- ==== File Upload Section ==== -->
+    <div class="file-section">
+      <div>
+        <label for="fileDefs">filterDefinitions.json</label>
+        <input type="file" id="fileDefs" accept=".json" />
+      </div>
+      <div>
+        <label for="fileValues">filterValues.json</label>
+        <input type="file" id="fileValues" accept=".json" />
+      </div>
+      <div>
+        <label for="filePartners">partnerSystems.json</label>
+        <input type="file" id="filePartners" accept=".json" />
+      </div>
+    </div>
+    <div style="text-align:center;margin:12px 0;">
+      <button id="loadSampleBtn" style="padding:10px 24px;background:#009688;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🚀 Load sample data</button>
+    </div>
+
+    <!-- ==== Search Bar ==== -->
+    <div class="search-section">
+      <input type="text" id="searchInput" placeholder="🔍 Search OrgUnit1 / filterValueContent…" />
+    </div>
+
+    <!-- ==== Render Area ==== -->
+    <div id="content"></div>
+  </div>
+
+  <script>
+    // ===== Data placeholders =====
+    let defsData = null;
+    let valuesData = null;
+    let partnersData = null;
+
+    // Store details for each row (for toggling)
+    const detailStore = {};
+
+    // ===== Helper: read any JSON file =====
+    function readJSONFile(file, callback) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          const json = JSON.parse(ev.target.result);
+          callback(json);
+        } catch (err) {
+          alert('Error reading JSON: ' + err);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ===== File upload events =====
+    document.getElementById('fileDefs').addEventListener('change', function(e) {
+      readJSONFile(e.target.files[0], data => {
+        defsData = data.filterDefinitions || [];
+        tryRender();
+      });
+    });
+    document.getElementById('fileValues').addEventListener('change', function(e) {
+      readJSONFile(e.target.files[0], data => {
+        valuesData = data.filterValues || [];
+        tryRender();
+      });
+    });
+    document.getElementById('filePartners').addEventListener('change', function(e) {
+      readJSONFile(e.target.files[0], data => {
+        partnersData = data.partnerSystems || [];
+        tryRender();
+      });
+    });
+
+    // Only render when all have been loaded
+    function tryRender() {
+      if (defsData && valuesData && partnersData) {
+        renderAll();
+      }
+    }
+
+    // ===== Main render grouped by filterDefinition =====
+    function renderAll() {
+      let html = '';
+      defsData.forEach((def, defIdx) => {
+        html += `
+          <div class="block">
+            <div class="block-header">Filter Definition #${defIdx + 1}</div>
+            <div class="block-content">
+              <div class="field-line">
+                <span class="field-label">filterDefinitionId:</span> ${def.filterDefinitionId}
+              </div>
+              <div class="field-line">
+                <span class="field-label">documentType:</span> ${def.documentType || '-'}
+              </div>
+              <div class="field-line">
+                <span class="field-label">filterSectionCode:</span> ${def.filterSectionCode || '-'}
+              </div>
+              <div class="field-line">
+                <span class="field-label">filterFieldId:</span> ${def.filterFieldId || '-'}
+              </div>
+              <div class="field-line">
+                <span class="field-label">lastModifiedDate:</span> ${def.lastModifiedDate || '-'}
+              </div>
+
+              <h3 style="margin-top:15px; color:#0b3c6e;">
+                Filter Values (${ countValuesForDefinition(def.filterDefinitionId) })
+              </h3>
+              ${renderValuesTable(def.filterDefinitionId)}
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('content').innerHTML = html;
+
+      // Reapply filter on each render (if any search term)
+      applyFilter();
+    }
+
+    // ===== Count how many filterValues belong to a definition =====
+    function countValuesForDefinition(defId) {
+      return valuesData.filter(v => v.filterDefinitionId === defId).length;
+    }
+
+    // ===== Build the table of filterValues for a given definition =====
+    function renderValuesTable(defId) {
+      const relatedValues = valuesData.filter(v => v.filterDefinitionId === defId);
+      if (!relatedValues.length) {
+        return `<p class="small-text">No FilterValue found for this definition.</p>`;
+      }
+
+      let tableHtml = `
+        <table>
+          <thead>
+            <tr>
+              <th>filterValueContent</th>
+              <th>partnerSystemId</th>
+              <th>Last Modified</th>
+              <th>Partner System Details</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      relatedValues.forEach((fv) => {
+        // Find the matching partnerSystemDetailId
+        const psDetailId = fv.partnerSystemDetailId;
+        const partner = partnersData.find(p => p.partnerSystemDetailId === psDetailId);
+        const psIdDisplay = partner
+          ? partner.partnerSystemId
+          : `<span class="highlight">Not found</span>`;
+        const lastMod = fv.lastModifiedDate || '-';
+
+        // Unique ID for toggling
+        const rowId = `def_${defId.replace(/[^a-zA-Z0-9]/g,'')}_val_${fv.filterValueId.replace(/[^a-zA-Z0-9]/g,'')}`;
+
+        // Store detail info for future toggle display
+        detailStore[rowId] = { filterValue: fv, partner };
+
+        // Initially, detail block is hidden and button text is "🔎 View Details"
+        tableHtml += `
+          <tr class="filter-row" id="row_${rowId}">
+            <td>${fv.filterValueContent}</td>
+            <td>${psIdDisplay}</td>
+            <td>${lastMod}</td>
+            <td>
+              <button class="details-btn" id="btn_${rowId}"
+                      onclick="toggleDetails('${rowId}')">
+                🔎 View Details
+              </button>
+            </td>
+          </tr>
+          <tr id="detail_${rowId}" class="nested-row" style="display:none;">
+            <td class="nested-cell" colspan="4">
+              ${renderDetailBlock(rowId)}
+            </td>
+          </tr>
+        `;
+      });
+
+      tableHtml += `</tbody></table>`;
+      return tableHtml;
+    }
+
+    // ===== Toggle visibility of detail block and update button text =====
+    function toggleDetails(rowId) {
+      const detailRow = document.getElementById(`detail_${rowId}`);
+      const btn = document.getElementById(`btn_${rowId}`);
+      if (!detailRow || !btn) return;
+
+      if (detailRow.style.display === 'none') {
+        // Open the detail block
+        detailRow.style.display = '';
+        btn.innerText = '🔽 Hide Details';
+      } else {
+        // Close the detail block
+        detailRow.style.display = 'none';
+        btn.innerText = '🔎 View Details';
+      }
+    }
+
+    // ===== Build HTML for each detail block =====
+    function renderDetailBlock(rowId) {
+      const store = detailStore[rowId];
+      if (!store) return '';
+
+      const fv = store.filterValue;
+      const partner = store.partner;
+
+      let html = `<div class="nested-block">
+        <h3>FilterValue Details</h3>
+        <table class="nested-table">
+          <thead><tr><th>Property</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><th>filterValueId</th><td>${fv.filterValueId}</td></tr>
+            <tr><th>filterValueContent</th><td>${fv.filterValueContent}</td></tr>
+            <tr><th>filterDefinitionId</th><td>${fv.filterDefinitionId}</td></tr>
+            <tr><th>partnerSystemDetailId</th><td>${fv.partnerSystemDetailId}</td></tr>
+            <tr><th>partnerSystemId</th><td>${fv.partnerSystemId}</td></tr>
+            <tr><th>lastModifiedDate</th><td>${fv.lastModifiedDate || '-'}</td></tr>
+          </tbody>
+        </table>`;
+
+      html += `<h3 style="margin-top:16px;">Partner System Details</h3>`;
+      if (partner) {
+        html += `<table class="nested-table">
+          <thead><tr><th>Property</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><th>partnerSystemDetailId</th><td>${partner.partnerSystemDetailId}</td></tr>
+            <tr><th>partnerSystemId</th><td>${partner.partnerSystemId}</td></tr>
+            <tr><th>partnerSystemType</th><td>${partner.partnerSystemType}</td></tr>
+            <tr><th>lastModifiedDate</th><td>${partner.lastModifiedDate || '-'}</td></tr>
+          </tbody>
+        </table>`;
+
+        // Display each systemVersionDefinition
+        if (Array.isArray(partner.systemVersionDefinitions) && partner.systemVersionDefinitions.length) {
+          partner.systemVersionDefinitions.forEach((sv, svIdx) => {
+            const svId = `${rowId}_sv_${svIdx}`;
+            // Start hidden
+            html += `
+              <div style="margin-top:10px;">
+                <button class="details-btn" id="btn_${svId}"
+                        onclick="toggleSVD('${svId}')">
+                  🔎 Version #${svIdx + 1}
+                </button>
+                <div id="${svId}" style="display:none; margin-top:8px;" class="nested-block">
+                  <table class="nested-table">
+                    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                    <tbody>
+                      <tr><th>partnerSystemApiGroup</th><td>${sv.partnerSystemApiGroup}</td></tr>
+                      <tr><th>partnerSystemApiGroupVersion</th><td>${sv.partnerSystemApiGroupVersion}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>`;
+          });
+        } else {
+          html += `<p class="small-text">No version definitions available.</p>`;
+        }
+      } else {
+        html += `<p class="highlight">PartnerSystem not found for this FilterValue.</p>`;
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
+    // ===== Toggle visibility of each version block and update button text =====
+    function toggleSVD(svdId) {
+      const div = document.getElementById(svdId);
+      const btn = document.getElementById(`btn_${svdId}`);
+      if (!div || !btn) return;
+
+      if (div.style.display === 'none') {
+        div.style.display = 'block';
+        btn.innerText = `🔽 Hide Version`;
+      } else {
+        div.style.display = 'none';
+        btn.innerText = `🔎 Version`;
+      }
+    }
+
+    // ===== Search/filter rows based on typed text =====
+    document.getElementById('searchInput').addEventListener('input', applyFilter);
+
+    function applyFilter() {
+      const term = document.getElementById('searchInput').value.trim().toLowerCase();
+      // Iterate all rows marked as ".filter-row"
+      document.querySelectorAll('tr.filter-row').forEach(tr => {
+        const text = tr.textContent.trim().toLowerCase();
+        const show = !term || text.includes(term);
+        tr.style.display = show ? '' : 'none';
+
+        // Also ensure that, if closing a parent row, its detail is hidden
+        const rowId = tr.id.replace(/^row_/, '');
+        const detailRow = document.getElementById(`detail_${rowId}`);
+        if (!show && detailRow) {
+          detailRow.style.display = 'none';
+          const btn = document.getElementById(`btn_${rowId}`);
+          if (btn) btn.innerText = '🔎 View Details';
+        }
+      });
+      // Hide nested rows if their parent is hidden or term does not match
+      document.querySelectorAll('tr.nested-row').forEach(nr => {
+        const parentId = nr.id.replace(/^detail_/, '');
+        const parentRow = document.getElementById(`row_${parentId}`);
+        nr.style.display = (parentRow && parentRow.style.display === 'none') ? 'none' : nr.style.display;
+      });
+    }
+
+    // ===== Sample data (defined after renderAll) =====
+    document.getElementById('loadSampleBtn').addEventListener('click', function() {
+      defsData = [
+        { filterDefinitionId: 'FDEF-001', documentType: 'EXPENSE', filterSectionCode: 'ALLOCATION', filterFieldId: 'CostCenter', lastModifiedDate: '2026-06-01' },
+        { filterDefinitionId: 'FDEF-002', documentType: 'EXPENSE', filterSectionCode: 'HEADER', filterFieldId: 'GLAccount', lastModifiedDate: '2026-06-15' }
+      ];
+      valuesData = [
+        { filterDefinitionId: 'FDEF-001', filterValueId: 'FV-001', filterValueContent: 'CC-1001', partnerSystemId: 'ERP-SYS-001', lastModifiedDate: '2026-06-01' },
+        { filterDefinitionId: 'FDEF-001', filterValueId: 'FV-002', filterValueContent: 'CC-1002', partnerSystemId: 'ERP-SYS-001', lastModifiedDate: '2026-06-01' },
+        { filterDefinitionId: 'FDEF-002', filterValueId: 'FV-003', filterValueContent: 'GL-6001', partnerSystemId: 'ERP-SYS-002', lastModifiedDate: '2026-06-15' }
+      ];
+      partnersData = [
+        { partnerSystemId: 'ERP-SYS-001', partnerSystemType: 'ERP_S4', partnerSystemDetailId: 'DETAIL-001', lastModifiedDate: '2026-05-01', systemVersionDefinitions: [] },
+        { partnerSystemId: 'ERP-SYS-002', partnerSystemType: 'ERP_ECC', partnerSystemDetailId: 'DETAIL-002', lastModifiedDate: '2026-05-10', systemVersionDefinitions: [] }
+      ];
+      renderAll();
+    });
+  </script>
+</body>
+</html>
